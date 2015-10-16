@@ -21,7 +21,10 @@ namespace walcl
         int intRows = 0;
         int intCols = 0;
         String[,] strData;
-        const String DOCPATH = @"D:\O\";
+        String WorkDirPath;
+        const String DefaultDirPath = @"D:\O";
+        const String TEMPLETNAME = @"Templet.dot";
+        const String DATAFILENAME = @"MyExcel.xls";
 
         public Form1()
         {
@@ -44,8 +47,7 @@ namespace walcl
             object missing = System.Reflection.Missing.Value;
             object readOnly = false;
             object isVisible = true;
-            //object TempletPath = DOCPATH + @"Templet.dotx";
-            object TempletPath = DOCPATH + @"Templet.docx";
+            object TempletPath = WorkDirPath + @"\" + TEMPLETNAME;
             try
             {
                 //Generate all documents, start from the 2nd line
@@ -53,8 +55,8 @@ namespace walcl
                 {
                     Log("Create document for " + strData[i - 1, 0] + "...");
                     wordDoc = wordApp.Documents.Open(ref TempletPath, ref missing, ref readOnly,
-                            ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref isVisible, ref missing, ref missing, ref missing, ref missing);                    
-                  for (int j = 1; j <= intCols; j++)
+                            ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref isVisible, ref missing, ref missing, ref missing, ref missing);
+                    for (int j = 1; j <= intCols; j++)
                     {
                         object bkObj = strData[0, j - 1];
                         if (wordApp.ActiveDocument.Bookmarks.Exists(strData[0, j - 1]))
@@ -67,9 +69,9 @@ namespace walcl
                             wordApp.Selection.TypeText(strData[i - 1, j - 1]);
                         }
                     }
-                    object sDocPath = DOCPATH + strData[i - 1, 0] + ".docx";
-
-                    object format = MSWord.WdSaveFormat.wdFormatDocumentDefault;
+                    object sDocPath = WorkDirPath + @"\" + strData[i - 1, 0] + ".doc";
+                    //object format = MSWord.WdSaveFormat.wdFormatDocumentDefault;
+                    object format = MSWord.WdSaveFormat.wdFormatDocument97;
                     wordDoc.SaveAs(ref sDocPath, ref format, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing);
                     wordDoc.Close(ref missing, ref missing, ref missing);
                 }
@@ -119,7 +121,7 @@ namespace walcl
             try
             {
                 // 打开Excel文件 
-                workBook = excelApp.Workbooks.Open(DOCPATH + @"MyExcel.xlsx", missing, readOnly, missing,
+                workBook = excelApp.Workbooks.Open(WorkDirPath + @"\" + DATAFILENAME, missing, readOnly, missing,
                     missing, missing, missing, missing, missing,
                     missing, missing, missing, missing, missing, missing);
                 //excelApp.Visible = true; // Excel应用程序可见 
@@ -146,8 +148,8 @@ namespace walcl
                     }
                 }
                 intRows = i - 1;
-                Log("Urika: " + intRows.ToString() + ", " + intCols.ToString());
-                Log("System: " + workSheet.UsedRange.Cells.Rows.Count + ", " + workSheet.UsedRange.Cells.Columns.Count);
+                Log("Rows " + intRows.ToString() + ", Cols " + intCols.ToString());
+                //Log("System: " + workSheet.UsedRange.Cells.Rows.Count + ", " + workSheet.UsedRange.Cells.Columns.Count);
 
                 //Read whole table, Ref http://blog.xudan123.com/121.html
                 strData = new String[intRows, intCols];
@@ -161,15 +163,17 @@ namespace walcl
                             Log("Row " + i + ", Col " + j + " Value is " + String.Empty);
                             if (1 == j)
                             {
-                                MessageBox.Show("Row " + i + ", Col " + j + ", " +strData[0, j - 1] + " must not be Null!");
+                                MessageBox.Show("Row " + i + ", Col " + j + ", " + strData[0, j - 1] + " must not be Null!");
                                 return false;
                             }
                             DialogResult dr = DialogResult.Yes;//MessageBox.Show(strData[i - 1, 0] + "'s " + strData[0, j - 1] + " (Row " + i + ", Col " + j + ") is Null! Continue?", "Warning", MessageBoxButtons.YesNo);
-                            if (dr == DialogResult.Yes){
+                            if (dr == DialogResult.Yes)
+                            {
                                 strData[i - 1, j - 1] = String.Empty;
                                 continue;
                             }
-                            else if (dr == DialogResult.No){
+                            else if (dr == DialogResult.No)
+                            {
                                 return false;
                             }
                         }
@@ -217,5 +221,50 @@ namespace walcl
             tbInfo.ScrollToCaret();
         }
 
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            tbFolder.Text = DefaultDirPath;
+            WorkDirPath = tbFolder.Text;
+        }
+
+        private void btFolder_Click(object sender, EventArgs e)
+        {
+            System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            folderBrowserDialog.SelectedPath = tbFolder.Text;
+            System.Windows.Forms.DialogResult result = folderBrowserDialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                tbFolder.Text = folderBrowserDialog.SelectedPath;
+                WorkDirPath = tbFolder.Text;
+            }
+        }
+
+        private void tbFolder_DragDrop(object sender, DragEventArgs e)
+        {
+            String path = ((System.Array)e.Data.GetData(DataFormats.FileDrop)).GetValue(0).ToString();
+            if (Directory.Exists(path))
+            {
+                tbFolder.Text = path;
+                WorkDirPath = tbFolder.Text;
+            }
+            else if (File.Exists(path))
+            {
+                path = System.IO.Path.GetDirectoryName(path);
+                tbFolder.Text = path;
+                WorkDirPath = tbFolder.Text;
+            }
+        }
+
+        private void tbFolder_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Link;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }  
+        }
     }
 }
