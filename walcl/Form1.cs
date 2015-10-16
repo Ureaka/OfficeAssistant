@@ -42,9 +42,10 @@ namespace walcl
             MSWord.ApplicationClass wordApp = new MSWord.ApplicationClass();
             MSWord.Document wordDoc = null;
             object missing = System.Reflection.Missing.Value;
-            object readOnly = true;
+            object readOnly = false;
             object isVisible = true;
-            object TempletPath = DOCPATH + @"Templet.dotx";
+            //object TempletPath = DOCPATH + @"Templet.dotx";
+            object TempletPath = DOCPATH + @"Templet.docx";
             try
             {
                 //Generate all documents, start from the 2nd line
@@ -52,13 +53,17 @@ namespace walcl
                 {
                     Log("Create document for " + strData[i - 1, 0] + "...");
                     wordDoc = wordApp.Documents.Open(ref TempletPath, ref missing, ref readOnly,
-                            ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref isVisible, ref missing, ref missing, ref missing, ref missing);
-                    for (int j = 1; j <= intCols; j++)
+                            ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref isVisible, ref missing, ref missing, ref missing, ref missing);                    
+                  for (int j = 1; j <= intCols; j++)
                     {
                         object bkObj = strData[0, j - 1];
                         if (wordApp.ActiveDocument.Bookmarks.Exists(strData[0, j - 1]))
                         {
                             wordApp.ActiveDocument.Bookmarks.get_Item(ref bkObj).Select();
+                            String s = strData[i - 1, j - 1];
+                            int len = Encoding.Default.GetBytes(s).Length;
+                            Log(s + " length: " + s.Length + ", bytes:" + len);
+                            wordApp.Selection.Delete(Type.Missing, len);
                             wordApp.Selection.TypeText(strData[i - 1, j - 1]);
                         }
                     }
