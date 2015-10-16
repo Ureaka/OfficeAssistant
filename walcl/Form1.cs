@@ -35,12 +35,25 @@ namespace walcl
         {
             if (LoadFromExcel())
             {
-                WriteDocument();
+                //Generate each dot file
+                string[] files = Directory.GetFiles(WorkDirPath, "*.dot", System.IO.SearchOption.TopDirectoryOnly);
+                int intValidTemp = 0;
+                for (int i = 0; i < files.Length; i++)
+                {
+                    String tmp = System.IO.Path.GetFileNameWithoutExtension(files[i]);
+                    if (tmp.StartsWith(@"~"))
+                        continue;
+                    intValidTemp++;
+                    Log("Templet file " + intValidTemp + ", " + files[i] + "...");
+                    WriteDocumentFromTemplet(tmp);
+                }
+                Log("" + intValidTemp + " Templets Done");
+
             }
             strData = null;
         }
 
-        public void WriteDocument()
+        public Boolean WriteDocumentFromTemplet(String sTemplet)
         {
             MSWord.ApplicationClass wordApp = new MSWord.ApplicationClass();
             MSWord.Document wordDoc = null;
@@ -74,7 +87,12 @@ namespace walcl
                             }
                         }
                     }
-                    object sDocPath = WorkDirPath + @"\" + strData[i - 1, 0] + ".doc";
+                    String personDirPath = WorkDirPath + @"\" + strData[i - 1, 0];
+                    if (!Directory.Exists(personDirPath))
+                    {
+                        Directory.CreateDirectory(personDirPath);
+                    }
+                    object sDocPath = personDirPath + @"\" + sTemplet + ".doc";
                     //object format = MSWord.WdSaveFormat.wdFormatDocumentDefault;
                     object format = MSWord.WdSaveFormat.wdFormatDocument97;
                     wordDoc.SaveAs(ref sDocPath, ref format, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing);
@@ -87,6 +105,7 @@ namespace walcl
             {
                 Log("Excel App error:" + e.ToString());
                 MessageBox.Show("WordApp App error:" + e.ToString());
+                return false;
             }
             finally
             {
@@ -96,7 +115,7 @@ namespace walcl
                     Log("Kill WordApp" + Environment.NewLine);
                 }
             }
-
+            return true;
         }
 
         [DllImport("user32.dll")]
