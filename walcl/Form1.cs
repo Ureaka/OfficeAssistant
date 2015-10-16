@@ -58,15 +58,20 @@ namespace walcl
                             ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref isVisible, ref missing, ref missing, ref missing, ref missing);
                     for (int j = 1; j <= intCols; j++)
                     {
-                        object bkObj = strData[0, j - 1];
-                        if (wordApp.ActiveDocument.Bookmarks.Exists(strData[0, j - 1]))
+                        string[] sArray = strData[0, j - 1].Split('|');
+                        foreach (string sBmk in sArray)
                         {
-                            wordApp.ActiveDocument.Bookmarks.get_Item(ref bkObj).Select();
-                            String s = strData[i - 1, j - 1];
-                            int len = Encoding.Default.GetBytes(s).Length;
-                            Log(s + " length: " + s.Length + ", bytes:" + len);
-                            wordApp.Selection.Delete(Type.Missing, len);
-                            wordApp.Selection.TypeText(strData[i - 1, j - 1]);
+                            object bkObj = sBmk;
+                            if (sArray.Length != 1) Log("Combined: " + strData[0, j - 1] + " contains " + sArray.Length + " bootmark , Finding  -- " + sBmk);
+                            if (wordApp.ActiveDocument.Bookmarks.Exists(sBmk))
+                            {
+                                wordApp.ActiveDocument.Bookmarks.get_Item(ref bkObj).Select();
+                                String s = strData[i - 1, j - 1];
+                                int len = Encoding.Default.GetBytes(s).Length;
+                                Log(s + " length: " + s.Length + ", bytes:" + len);
+                                wordApp.Selection.Delete(Type.Missing, len);
+                                wordApp.Selection.TypeText(strData[i - 1, j - 1]);
+                            }
                         }
                     }
                     object sDocPath = WorkDirPath + @"\" + strData[i - 1, 0] + ".doc";
@@ -264,7 +269,7 @@ namespace walcl
             else
             {
                 e.Effect = DragDropEffects.None;
-            }  
+            }
         }
     }
 }
