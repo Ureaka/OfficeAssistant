@@ -36,16 +36,15 @@ namespace walcl
             if (LoadFromExcel())
             {
                 //Generate each dot file
-                string[] files = Directory.GetFiles(WorkDirPath, "*.dot", System.IO.SearchOption.TopDirectoryOnly);
+                string[] files = Directory.GetFiles(WorkDirPath, "*.docx", System.IO.SearchOption.TopDirectoryOnly);
                 int intValidTemp = 0;
                 for (int i = 0; i < files.Length; i++)
                 {
-                    String tmp = System.IO.Path.GetFileNameWithoutExtension(files[i]);
-                    if (tmp.StartsWith(@"~"))
+                    if (System.IO.Path.GetFileNameWithoutExtension(files[i]).StartsWith(@"~"))
                         continue;
-                    intValidTemp++;
                     Log("Templet file " + intValidTemp + ", " + files[i] + "...");
-                    WriteDocumentFromTemplet(tmp);
+                    if (WriteDocumentFromTemplet(files[i]))
+                        intValidTemp++;
                 }
                 Log("" + intValidTemp + " Templets Done");
 
@@ -53,14 +52,14 @@ namespace walcl
             strData = null;
         }
 
-        public Boolean WriteDocumentFromTemplet(String sTemplet)
+        public Boolean WriteDocumentFromTemplet(String sTempletPath)
         {
             MSWord.ApplicationClass wordApp = new MSWord.ApplicationClass();
             MSWord.Document wordDoc = null;
             object missing = System.Reflection.Missing.Value;
             object readOnly = false;
             object isVisible = true;
-            object TempletPath = WorkDirPath + @"\" + TEMPLETNAME;
+            object TempletPath = sTempletPath;
             try
             {
                 //Generate all documents, start from the 2nd line
@@ -92,7 +91,7 @@ namespace walcl
                     {
                         Directory.CreateDirectory(personDirPath);
                     }
-                    object sDocPath = personDirPath + @"\" + sTemplet + ".doc";
+                    object sDocPath = personDirPath + @"\" + System.IO.Path.GetFileNameWithoutExtension(sTempletPath) + ".doc";
                     //object format = MSWord.WdSaveFormat.wdFormatDocumentDefault;
                     object format = MSWord.WdSaveFormat.wdFormatDocument97;
                     wordDoc.SaveAs(ref sDocPath, ref format, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing);
