@@ -47,13 +47,13 @@
             // tbInfo
             // 
             this.tbInfo.AllowDrop = true;
-            this.tbInfo.Location = new System.Drawing.Point(12, 30);
+            this.tbInfo.Location = new System.Drawing.Point(12, 12);
             this.tbInfo.Multiline = true;
             this.tbInfo.Name = "tbInfo";
             this.tbInfo.ReadOnly = true;
             this.tbInfo.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.tbInfo.ShortcutsEnabled = false;
-            this.tbInfo.Size = new System.Drawing.Size(512, 272);
+            this.tbInfo.Size = new System.Drawing.Size(511, 297);
             this.tbInfo.TabIndex = 1;
             this.tbInfo.DragDrop += new System.Windows.Forms.DragEventHandler(this.tbFolder_DragDrop);
             this.tbInfo.DragEnter += new System.Windows.Forms.DragEventHandler(this.tbFolder_DragEnter);
@@ -83,13 +83,16 @@
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(541, 361);
+            this.ClientSize = new System.Drawing.Size(537, 361);
             this.Controls.Add(this.btFolder);
             this.Controls.Add(this.tbFolder);
             this.Controls.Add(this.tbInfo);
             this.Controls.Add(this.btExec);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "Office";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Office ";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

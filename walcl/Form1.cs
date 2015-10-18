@@ -121,7 +121,7 @@ namespace walcl
         public static extern System.IntPtr FindWindowEx(System.IntPtr parent, System.IntPtr childe, string strclass, string strname);
         public void Kill(MSWord.Application word)
         {
-
+            Log("Kill Word Process " + word.Caption);
             IntPtr p = FindWindowEx(System.IntPtr.Zero, System.IntPtr.Zero, null, word.Caption);
             int k = 0;
 
