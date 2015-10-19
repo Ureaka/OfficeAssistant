@@ -25,19 +25,45 @@ namespace walcl
         const String DefaultDirPath = @"D:\O";
         const String TEMPLETNAME = @"Templet.dot";
         const String DATAFILENAME = @"MyExcel.xls";
+        DateTime startTime = DateTime.MinValue;
 
         public Form1()
         {
             InitializeComponent();
         }
 
+        public static TimeSpan ExecDateDiff(DateTime dateBegin, DateTime dateEnd)
+        {
+            TimeSpan ts1 = new TimeSpan(dateBegin.Ticks);
+            TimeSpan ts2 = new TimeSpan(dateEnd.Ticks);
+            TimeSpan ts3 = ts1.Subtract(ts2).Duration();
+            //string dateDiff = ts.Days.ToString() + "天"
+            //                + ts.Hours.ToString() + "小时"
+            //                + ts.Minutes.ToString() + "分钟"
+            //                + ts.Seconds.ToString() + "秒, ts.TotalMinutes " + ts.TotalMinutes;
+            //return dateDiff;
+            //return ts3.TotalMilliseconds.ToString();
+            return ts3;
+        }
+
         private void btExec_Click(object sender, EventArgs e)
         {
+            //Avoid click many times in one time
+            DateTime dtNow = DateTime.Now;
+            if (startTime != DateTime.MinValue && ExecDateDiff(startTime, dtNow).TotalMilliseconds < 1500)
+            {
+                MessageBox.Show("你按得太快了，给我点时间缓缓");
+                return;
+            }
+            startTime = dtNow;
+            this.btExec.Enabled = false;
+            Log("startTime: " + startTime);
+
             if (LoadFromExcel())
             {
                 //Generate each dot file
                 string[] files = Directory.GetFiles(WorkDirPath, "*.docx", System.IO.SearchOption.TopDirectoryOnly);
-                int intValidTemp = 0;
+                int intValidTemp = 1;
                 for (int i = 0; i < files.Length; i++)
                 {
                     if (System.IO.Path.GetFileNameWithoutExtension(files[i]).StartsWith(@"~"))
@@ -45,11 +71,25 @@ namespace walcl
                     Log("Templet file " + intValidTemp + ", " + files[i] + "...");
                     if (WriteDocumentFromTemplet(files[i]))
                         intValidTemp++;
+                    else
+                    {
+                        Log("" + intValidTemp + " Templets error! Stop.");
+                        strData = null;
+                        this.btExec.Enabled = true;
+                        return;
+                    }
                 }
                 Log("" + intValidTemp + " Templets Done");
 
             }
+
             strData = null;
+            this.btExec.Enabled = true;
+            TimeSpan ts = ExecDateDiff(startTime, DateTime.Now);
+            string sSpendTime = (ts.Minutes > 0 ? ts.Minutes.ToString() + "m " : "")
+                + (ts.Seconds > 0 ? ts.Seconds + "s " : "")
+                + (ts.Milliseconds > 0 ? ts.Milliseconds + "ms" : "");
+            Log("Total time " + sSpendTime);
         }
 
         public Boolean WriteDocumentFromTemplet(String sTempletPath)
@@ -74,13 +114,13 @@ namespace walcl
                         foreach (string sBmk in sArray)
                         {
                             object bkObj = sBmk;
-                            if (sArray.Length != 1) Log("Combined: " + strData[0, j - 1] + " contains " + sArray.Length + " bootmark , Finding  -- " + sBmk);
+                            //if (sArray.Length != 1) Log("Combined: " + strData[0, j - 1] + " contains " + sArray.Length + " bootmark , Finding  -- " + sBmk);
                             if (wordApp.ActiveDocument.Bookmarks.Exists(sBmk))
                             {
                                 wordApp.ActiveDocument.Bookmarks.get_Item(ref bkObj).Select();
                                 String s = strData[i - 1, j - 1];
                                 int len = Encoding.Default.GetBytes(s).Length;
-                                Log(s + " length: " + s.Length + ", bytes:" + len);
+                                //Log(s + " length: " + s.Length + ", bytes:" + len);
                                 wordApp.Selection.Delete(Type.Missing, len);
                                 wordApp.Selection.TypeText(strData[i - 1, j - 1]);
                             }
@@ -98,20 +138,28 @@ namespace walcl
                     wordDoc.Close(ref missing, ref missing, ref missing);
                 }
                 wordApp.Quit(ref missing, ref missing, ref missing);
+                wordApp = null;
                 Log("Create OK");
             }
             catch (Exception e)
             {
-                Log("Excel App error:" + e.ToString());
-                MessageBox.Show("WordApp App error:" + e.ToString());
+                Log(sTempletPath + Environment.NewLine + "Excel App error:" + e.Message.ToString());
+                MessageBox.Show(sTempletPath + Environment.NewLine + " WordApp App error:" + e.Message.ToString());
                 return false;
             }
             finally
             {
                 if (wordApp != null)
                 {
-                    Kill(wordApp);
-                    Log("Kill WordApp" + Environment.NewLine);
+                    try
+                    {
+                        Kill(wordApp);
+                        Log("WordApp exited");
+                    }
+                    catch (Exception e)
+                    {
+                        Log(sTempletPath + Environment.NewLine + " Kill WordApp exception " + e.Message);
+                    }
                 }
             }
             return true;
@@ -121,7 +169,7 @@ namespace walcl
         public static extern System.IntPtr FindWindowEx(System.IntPtr parent, System.IntPtr childe, string strclass, string strname);
         public void Kill(MSWord.Application word)
         {
-            Log("Kill Word Process " + word.Caption);
+            Log("Killing Word Process " + word.Caption);
             IntPtr p = FindWindowEx(System.IntPtr.Zero, System.IntPtr.Zero, null, word.Caption);
             int k = 0;
 
@@ -183,7 +231,7 @@ namespace walcl
                         rng = (Microsoft.Office.Interop.Excel.Range)workSheet.Cells[i, j];
                         if (rng.Value2 == null)
                         {
-                            Log("Row " + i + ", Col " + j + " Value is " + String.Empty);
+                            //Log("Row " + i + ", Col " + j + " Value is " + String.Empty);
                             if (1 == j)
                             {
                                 MessageBox.Show("Row " + i + ", Col " + j + ", " + strData[0, j - 1] + " must not be Null!");
@@ -202,7 +250,7 @@ namespace walcl
                         }
                         //Use rng.Text other than rng.Value2 to Get the special TEXT
                         strData[i - 1, j - 1] = rng.Text.ToString().Trim();
-                        Log("Row " + i + ", Col " + j + " Text is " + strData[i - 1, j - 1]);
+                        //Log("Row " + i + ", Col " + j + " Text is " + strData[i - 1, j - 1]);
                     }
                 }
 
